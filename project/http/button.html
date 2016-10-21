@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Camera Demo</title>
+    
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script src="button.js"></script>
+    <script src="js/jquery.min.js"></script>
+   
+    <script src="js/jquery-ui.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $("#hide").click(function(){
+            $("p").hide();
+        });
+
+        $("#show").click(function(){
+            $("p").show();
+        });
+    });
+</script>
+</head>
+<body>
+    <button id="test" onClick='test()'/>Test</button>
+    <p id="status">waiting for input</p>
+    <button id="hide">Hide</button>
+    <button id="show">Show</button>
+</body>
+</html>
