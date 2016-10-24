@@ -16,8 +16,8 @@ var port = 9090, // Port to listen on
     child_process = require('child_process'),
     server,
     connectCount = 0,	// Number of connections to server
+    picturecount = 0,
     errCount = 0;	// Counts the AIN errors.
-    
 //  Audio
     var frameCount = 0,     // Counts the frames from arecord
         lastFrame = 0,      // Last frame sent to browser
@@ -70,13 +70,13 @@ console.log("Listening on " + port);
 // socket.io, I choose you
 var io = require('socket.io').listen(server);
 io.set('log level', 2);
-
+var socket1;
 // See https://github.com/LearnBoost/socket.io/wiki/Exposed-events
 // for Exposed events
 
 // on a 'connection' event
 io.sockets.on('connection', function (socket) {
-
+    socket1 = socket;
     console.log("Connection " + socket.id + " accepted.");
 //    console.log("socket: " + socket);
 
@@ -101,12 +101,20 @@ io.sockets.on('connection', function (socket) {
     socket.on('led1',function(state){
         console.log('buton is clicked');
         b.digitalWrite('USR3',b.HIGH);
-        child_process.exec('v4l2grab -W 160 -H 120 -o test.JPEG');
-        console.log('picture taken');
-       // fs.readFile('test.JPEG',function(err,buf){
-         //   socket.emit('image',{image: true,buffer:buf.toString('base64')});
-           // console.log('image file is sent from the server');
-       // });
+        if(picturecount == 0){
+        
+             child_process.exec('v4l2grab -W 160 -H 120 -o test0.JPEG',piccallback);
+        }else if(picturecount == 1){
+            
+            child_process.exec('v4l2grab -W 160 -H 120 -o test1.JPEG',piccallback);
+        }else if(picturecount == 2){
+            
+            child_process.exec('v4l2grab -W 160 -H 120 -o test2.JPEG',piccallback);
+        }else{
+            console.log('sth is wrong');
+        }
+       // setTimeout(timeoutcallback(socket),2000);
+   
     });
     socket.on('gpio', function (gpioNum) {
 //    console.log('gpio' + gpioNum);
@@ -294,5 +302,43 @@ function startAudio(){
         });
     } catch(err) {
         console.log("arecord error: " + err);
+    }
+}
+
+function timeoutcallback(socket){
+    
+        console.log('function timeoutcallback');
+        fs.readFile('test.JPEG',function(err,buf,count){
+            socket.emit('image',{image: true,buffer:buf.toString('base64'),count:picturecount});
+            console.log('image file is sent from the server');
+            console.log('buffer  '+buf.toString('base64'));
+            console.log('picturecount='+picturecount);
+        });
+        picturecount = picturecount+1;
+        if(3 == picturecount){
+            picturecount = 0;
+        }
+
+}
+
+function piccallback(error,stout,sterr){
+    if(!error){
+        console.log('picture is taken');
+
+        //fs.readFile('test.JPEG',function(err,buf,count){
+          //  socket1.emit('image',{image: true,buffer:buf.toString('base64'),count:picturecount});
+           // console.log('image file is sent from the server');
+         //   console.log('buffer  '+buf.toString('base64'));
+          //  console.log('picturecount='+picturecount);
+      //  });
+
+         socket1.emit('image',{count:picturecount});
+        console.log('image file is sent from the server');
+         //   console.log('buffer  '+buf.toString('base64'));
+         console.log('picturecount='+picturecount);
+        picturecount = picturecount+1;
+        if(3 == picturecount){
+            picturecount = 0;
+        }
     }
 }

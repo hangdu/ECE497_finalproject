@@ -1,24 +1,47 @@
-var socket;
+var socket = io();
 var firstconnect = true;
 var state;
+var count = 0;
 //var ctx = document.getElementById('coffee').getContext('2d');
 function test(){
     socket.emit('led1',{state:1});
     status_update('change');
-    socket.on("image",function(image,buffer){
-        if(image){
-            console.log("image:from client side");
-            var img = new Image();
-            img.src = 'data:jpeg.base64,'+buffer;
-            ctx.drawImage(img,0,0);
-        }
-    
-    });
 }
+socket.on('image',function(params){
 
-connect();
+//    clearcache();
+     console.log("image:from client side");
+     status_update('image');
+     
+           //  var img = new Image();
+            // img.src = 'data:./jpeg;base64,'+buffer;
+//             $('#coffee').attr('src','data:image/jpeg;base64,'+buffer);
+             
+            if(count == 0){
+                
+                status_update('count = 0');
+                $('#coffee').attr('src','test0.JPEG');
+            }else if(count == 1){
+                status_update('count = 1');
+                
+                $('#coffee').attr('src','test1.JPEG');
+            }else if(count == 2){
+                status_update('count = 2');
+                $('#coffee').attr('src','./test2.JPEG');
+            }else{
+                status_update('new value count='+count);
+            }
+ //            ctx.drwaImage(img,0,0);
+           count++;
+           if(count == 3){
+                count = 0;
+           }
+});
 
-
+//connect();
+socket.on('test',function(data){
+//    status_update('test');
+});
 
    function connect() {
       if(firstconnect) {
@@ -56,4 +79,10 @@ connect();
 
 function status_update(txt){
     $('#status').html(txt);
+}
+
+function clearcache(){
+    for(var x in jQuery.cache){
+        delete jQuery.cache[x];
+    }
 }
