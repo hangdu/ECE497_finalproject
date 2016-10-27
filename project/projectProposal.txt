@@ -1,4 +1,4 @@
-Target
+ Target
 -To control on and off of the coffee pot by website
 -To get a picture of the coffee pot so that we know how full it is by website
 -To use a temperature sensor to get the temperature of coffee.
@@ -17,9 +17,10 @@ Week of 10/19
 4. to use the webcam to take a picture and send the picture to the webpage (Hang)DONE
 
 Week of 10/26
-1. learn how to use the temperature sensor(James)
-2. learn how to use the LCD display(Hang)
-3. investigate opencv
-
+1. learn how to use the temperature sensor(James)  DONE
+2. Realtime plot the temperature on the webpage (Hang)
+3. Find scale to use for detecting fullness of the pot. (JAMES)
+4. Wikipage (James)
+5. Explore LCD Display (Hang)
 Week of 11/02
 1. Make website pretty
