@@ -28,6 +28,9 @@ var port = 9090, // Port to listen on
         
         // PWM
         var pwm = 'P9_21';
+
+var ds18b20 = require('ds18b20');
+var sensorid;
 b.pinMode('USR3',b.OUTPUT);
 
 // Initialize various IO things.
@@ -75,6 +78,11 @@ var socket1;
 // for Exposed events
 
 // on a 'connection' event
+ds18b20.sensors(function(err,id){
+    sensorid = id;
+    console.log('sensorid='+sensorid);
+});
+
 io.sockets.on('connection', function (socket) {
     socket1 = socket;
     console.log("Connection " + socket.id + " accepted.");
@@ -84,6 +92,11 @@ io.sockets.on('connection', function (socket) {
     // define its event handlers
 
     // Send value every time a 'message' is received.
+    socket.emit('news',{hello:'world'});
+    socket.on('my other event',function(params){
+        console.log('receive my other event='+params.dis);
+    });
+
     socket.on('ain', function (ainNum) {
         b.analogRead(ainNum, function(x) {
             if(x.err && errCount++<5) console.log("AIN read error");
@@ -103,17 +116,23 @@ io.sockets.on('connection', function (socket) {
         b.digitalWrite('USR3',b.HIGH);
         if(picturecount == 0){
         
-             child_process.exec('v4l2grab -W 160 -H 120 -o test0.JPEG',piccallback);
+             child_process.exec('v4l2grab -W 320 -H 240 -o test0.JPEG',piccallback);
         }else if(picturecount == 1){
             
-            child_process.exec('v4l2grab -W 160 -H 120 -o test1.JPEG',piccallback);
+            child_process.exec('v4l2grab -W 320 -H 240 -o test1.JPEG',piccallback);
         }else if(picturecount == 2){
             
-            child_process.exec('v4l2grab -W 160 -H 120 -o test2.JPEG',piccallback);
+            child_process.exec('v4l2grab -W 320 -H 240 -o test2.JPEG',piccallback);
         }else{
             console.log('sth is wrong');
         }
        // setTimeout(timeoutcallback(socket),2000);
+
+       ds18b20.temperature(sensorid,function(err,value){
+            console.log('temp='+value);
+            socket.emit('temp',{temp:value});
+       
+       });
    
     });
     socket.on('gpio', function (gpioNum) {
@@ -341,4 +360,12 @@ function piccallback(error,stout,sterr){
             picturecount = 0;
         }
     }
+}
+
+
+function gettemp(){
+    ds18b20.temperature(sensorid,function(err,value){
+        console.log('temp='+value);
+    });    
+    
 }
