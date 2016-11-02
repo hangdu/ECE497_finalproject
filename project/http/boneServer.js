@@ -126,15 +126,21 @@ io.sockets.on('connection', function (socket) {
         }else{
             console.log('sth is wrong');
         }
-       // setTimeout(timeoutcallback(socket),2000);
 
-       ds18b20.temperature(sensorid,function(err,value){
-            console.log('temp='+value);
-            socket.emit('temp',{temp:value});
+//       ds18b20.temperature(sensorid,function(err,value){
+  //          console.log('temp='+value);
+    //        socket.emit('temp',{temp:value});
        
-       });
+      // });
    
     });
+
+
+
+//get temp data every 30s
+    setInterval(function(){
+        tempcallback(socket);
+    },30000);
     socket.on('gpio', function (gpioNum) {
 //    console.log('gpio' + gpioNum);
         b.digitalRead(gpioNum, function(x) {
@@ -368,4 +374,15 @@ function gettemp(){
         console.log('temp='+value);
     });    
     
+}
+
+
+function tempcallback(socket){
+
+     ds18b20.temperature(sensorid,function(err,value){
+         console.log('temp='+value);
+         socket.emit('temp',{temp:value});
+     
+     });
+
 }
