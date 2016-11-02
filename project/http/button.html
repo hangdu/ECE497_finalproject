@@ -7,12 +7,11 @@
     
     <script src="/socket.io/socket.io.js"></script>
 
-    <script src="button.js"></script>
     <script src="js/jquery.min.js"></script>
    
     <script src="js/jquery-ui.min.js"></script>
     
-    <link href="examples.css" rel="stylesheet" type="text/css">
+    <link href="./flot/examples/examples.css" rel="stylesheet" type="text/css">
 	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
 	<script language="javascript" type="text/javascript" src="./flot/jquery.js"></script>
 	<script language="javascript" type="text/javascript" src="./flot/jquery.flot.js"></script>
@@ -26,15 +25,145 @@
         $("#show").click(function(){
             $("p").show();
         });
-        $.plot($("#placeholder"), [ [[0, 0], [1, 1]] ], { yaxis: { max: 1 } });
-        plot.draw();
-    });
+        var plot =  $.plot($("#placeholder"), [ [[0, 0], [1, 1]] ], 
+                { 
+                    yaxis: { max: 40 },
+                    xaxis: { max: 15},
+                    grid: {clickable:true,
+                           hoverable:true
+                    } 
+                });
+         plot.draw();
+
+//$("#placeholder").bind("plotclick",function(event,pos,item){
+//    alert("You clicked at "+pos.x+","+pos.y);
+  //  if(item){
+    //    highlight(item.series,item.datapoint);
+      //  alert("you clicked a point!"+item.datapoint[0]+","+item.datapoint[1]);
+   // }
+//});
+
+
+		$("<div id='tooltip'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid #fdd",
+			padding: "2px",
+			"background-color": "#fee",
+			opacity: 0.80
+		}).appendTo("body");
+
+		$("#placeholder").bind("plothover", function (event, pos, item) {
+
+
+				if (item) {
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+
+					$("#tooltip").html("(" + x+","+ y+")")
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+				} else {
+					$("#tooltip").hide();
+				}
+		});
+
+
+var socket = io();
+var firstconnect = true;
+var state;
+var count = 0;
+
+var i2cNum = "0x70";
+var i = 5;
+var data = [],
+	totalPoints = 300;
+var tempcount = 0;	
+	
+
+
+
+
+var tempdata = [];
+// // Add the Flot version string to the footer
+
+// $("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+$("#test").click(function(){
+
+    socket.emit('led1',{state:1});
+    status_update('change');
+});
+function test(){
+    socket.emit('led1',{state:1});
+    status_update('change');
+}
+
+socket.on('news',function(data){
+    status_update(data);
+    socket.emit('my other event',{i2cNum: i2cNum,i:2*i,dis:"test"});
+});
+
+socket.on('temp',function(param){
+    tempdata.push([tempcount,param.temp]);
+    tempcount = tempcount+1;
+    console.log(tempcount);
+    status_update(param.temp);
+
+    updatetemp();
+});
+
+function updatetemp(){
+
+    plot.setData([tempdata]);
+    plot.draw();
+}
     
+socket.on('image',function(params){
+
+//    clearcache();
+     console.log("image:from client side");
+  //   status_update('image');
+     
+           //  var img = new Image();
+            // img.src = 'data:./jpeg;base64,'+buffer;
+//             $('#coffee').attr('src','data:image/jpeg;base64,'+buffer);
+             
+            if(count == 0){
+                
+//                status_update('count = 0');
+                $('#coffee').attr('src','test0.JPEG');
+            }else if(count == 1){
+  //              status_update('count = 1');
+                
+                $('#coffee').attr('src','test1.JPEG');
+            }else if(count == 2){
+    //            status_update('count = 2');
+                $('#coffee').attr('src','./test2.JPEG');
+            }else{
+    //            status_update('new value count='+count);
+            }
+ //            ctx.drwaImage(img,0,0);
+           count++;
+           if(count == 3){
+                count = 0;
+           }
+});
+
+socket.on('test',function(data){
+//    status_update('test');
+});
+
+
+function status_update(txt){
+    $('#status').html(txt);
+}
+
+});
 </script>
 
 </head>
 <body>
-    <button id="test" onClick='test()'/>Test</button>
+    <button id="test"/>Test</button>
     <p id="status">waiting for input</p>
     <button id="hide">Hide</button>
     <button id="show">Show</button>
