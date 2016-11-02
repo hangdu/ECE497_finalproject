@@ -25,7 +25,16 @@
                     xaxis: { max: 15},
                     grid: {clickable:true,
                            hoverable:true
-                    } 
+                    },
+                    series:{
+                        points:{
+                            show:true,
+                            radius:1
+                        },
+                        lines:{
+                            show:true
+                        }
+                    }
                 });
          plot.draw();
 
@@ -43,12 +52,16 @@
 
 
 				if (item) {
-					var x = item.datapoint[0].toFixed(2);
+					//var x = item.datapoint[0].toFixed(2);
+
+                    var x = item.datapoint[0].toFixed(2);
+                    var min = Math.floor(x);
+                    var second = Math.floor(60*(x-min));
+
 					var y = item.datapoint[1].toFixed(2);
-                   // var y = timedata[pos].getHours()+":"+timedata[pos].getMinutes()+":"+timedata[pos].getSeconds();
                     console.log('pos='+pos);
 
-					$("#tooltip").html("(" + x+","+ y+")")
+					$("#tooltip").html("("+min+":"+second+","+ y+")")
 						.css({top: item.pageY+5, left: item.pageX+5})
 						.fadeIn(200);
 				} else {
@@ -120,7 +133,8 @@ function showtool(){
 }
 function updatetemp(){
 
-    plot.setData([tempdata]);
+   // plot.setData([tempdata]);
+    plot.setData([{data:tempdata, points:{symbol:"circle"}}]);
     plot.draw();
 }
     
