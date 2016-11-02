@@ -127,16 +127,12 @@ io.sockets.on('connection', function (socket) {
             console.log('sth is wrong');
         }
 
-//       ds18b20.temperature(sensorid,function(err,value){
-  //          console.log('temp='+value);
-    //        socket.emit('temp',{temp:value});
-       
-      // });
    
     });
 
 
 
+    tempcallback(socket);
 //get temp data every 30s
     setInterval(function(){
         tempcallback(socket);
@@ -369,12 +365,6 @@ function piccallback(error,stout,sterr){
 }
 
 
-function gettemp(){
-    ds18b20.temperature(sensorid,function(err,value){
-        console.log('temp='+value);
-    });    
-    
-}
 
 
 function tempcallback(socket){
