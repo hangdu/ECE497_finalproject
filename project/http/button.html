@@ -18,13 +18,7 @@
 	<script type="text/javascript"></script>
 <script>
     $(document).ready(function(){
-        $("#hide").click(function(){
-            $("p").hide();
-        });
-
-        $("#show").click(function(){
-            $("p").show();
-        });
+        
         var plot =  $.plot($("#placeholder"), [ [[0, 0], [1, 1]] ], 
                 { 
                     yaxis: { max: 40 },
@@ -34,14 +28,6 @@
                     } 
                 });
          plot.draw();
-
-//$("#placeholder").bind("plotclick",function(event,pos,item){
-//    alert("You clicked at "+pos.x+","+pos.y);
-  //  if(item){
-    //    highlight(item.series,item.datapoint);
-      //  alert("you clicked a point!"+item.datapoint[0]+","+item.datapoint[1]);
-   // }
-//});
 
 
 		$("<div id='tooltip'></div>").css({
@@ -57,8 +43,10 @@
 
 
 				if (item) {
-					var x = item.datapoint[0].toFixed(2),
-						y = item.datapoint[1].toFixed(2);
+					var x = item.datapoint[0].toFixed(2);
+					var y = item.datapoint[1].toFixed(2);
+                   // var y = timedata[pos].getHours()+":"+timedata[pos].getMinutes()+":"+timedata[pos].getSeconds();
+                    console.log('pos='+pos);
 
 					$("#tooltip").html("(" + x+","+ y+")")
 						.css({top: item.pageY+5, left: item.pageX+5})
@@ -83,8 +71,9 @@ var tempcount = 0;
 
 
 
-
+var timedata = [];
 var tempdata = [];
+
 // // Add the Flot version string to the footer
 
 // $("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
@@ -104,7 +93,18 @@ socket.on('news',function(data){
 });
 
 socket.on('temp',function(param){
-    tempdata.push([tempcount,param.temp]);
+    var currentdate = new Date();
+    var second = currentdate.getSeconds();
+    var min = currentdate.getMinutes();
+    var hour = currentdate.getHours();
+    timedata.push(currentdate);
+
+    var xaexsmin = 10*Math.floor(min/10);
+    plot.getOptions().xaxes[0].min = xaexsmin;
+    plot.getOptions().xaxes[0].max = xaexsmin+10;
+
+    plot.setupGrid();
+    tempdata.push([min+second/60,param.temp]);
     tempcount = tempcount+1;
     console.log(tempcount);
     status_update(param.temp);
@@ -112,6 +112,12 @@ socket.on('temp',function(param){
     updatetemp();
 });
 
+function showtool(){
+
+//		$("#tooltip").html("(" + x+","+ y+")")
+//			.css({top: item.pageY+5, left: item.pageX+5})
+//			.fadeIn(200);
+}
 function updatetemp(){
 
     plot.setData([tempdata]);
@@ -165,8 +171,6 @@ function status_update(txt){
 <body>
     <button id="test"/>Test</button>
     <p id="status">waiting for input</p>
-    <button id="hide">Hide</button>
-    <button id="show">Show</button>
     <img src ="/images/audio.jpg" id="coffee">
 
     <div id="headers">
