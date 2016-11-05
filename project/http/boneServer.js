@@ -14,6 +14,7 @@ var port = 9090, // Port to listen on
     fs = require('fs'),
     b = require('bonescript'),
     child_process = require('child_process'),
+    cr = require('crontab'),
     server,
     connectCount = 0,	// Number of connections to server
     picturecount = 0,
@@ -113,7 +114,7 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('led1',function(state){
         console.log('buton is clicked');
-        b.digitalWrite('USR3',b.HIGH);
+       // b.digitalWrite('USR3',b.HIGH);
         if(picturecount == 0){
         
              child_process.exec('v4l2grab -W 320 -H 240 -o test0.JPEG',piccallback);
@@ -131,6 +132,46 @@ io.sockets.on('connection', function (socket) {
     });
 
 
+    socket.on('coffeeon',function(param){
+            console.log(param);
+            console.log(param.time);
+            var str = ""+param.time;
+            var res = str.split(":");
+            var hour = res[0];
+            var min = res[1];
+            console.log('hour='+hour);
+            console.log('min='+min);
+            //delete previous task
+            
+
+            child_process.exec('crontab -r',function(error,stout,sterr){
+                if(error == null){
+                     console.log('crontab -r success');
+                }
+            });
+            //set new task
+            var hour1 = parseInt(hour)+4;
+            console.log('hour1=hour+4='+hour1);
+            if(hour1>=24){
+                hour1 = hour1-24;
+            }
+            console.log('hour1='+hour1);
+
+
+            require('crontab').load(function(err,crontab){
+                 var job = crontab.create('cd /sys/class/gpio/gpio31 && echo 1 > value');
+                 job.minute().at(min);
+                 job.hour().at(hour1);
+                crontab.save(function(err,crontab){
+                     if(err == null){
+                         console.log('save ok');
+                     }
+                 });
+
+
+            });
+
+    });
 
     tempcallback(socket);
 //get temp data every 30s

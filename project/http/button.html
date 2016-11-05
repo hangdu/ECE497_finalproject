@@ -94,6 +94,14 @@ $("#test").click(function(){
 
     socket.emit('led1',{state:1});
 });
+
+$("#submittime").click(function(){
+    var x = document.getElementById("coffeeontime").value;
+    //if value is null what should be done
+    console.log('coffee on time='+x);
+    socket.emit('coffeeon',{time:x});
+});
+
 function test(){
     socket.emit('led1',{state:1});
 }
@@ -187,13 +195,14 @@ socket.on('image',function(params){
 
 		<p>You can update a chart periodically to get a real-time effect by using a timer to insert the new data in the plot and redraw it.</p>
 
-		<p>Time between updates: <input id="updateInterval" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
+		<p>Time between updates: <input id="coffeeontime" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
 
 	</div>
-
+    <button id="submittime">submit</button>
 	<div id="footer">
 		Copyright &copy; 2007 - 2014 IOLA and Ole Laursen
 	</div>
+
 
 </body>
 </html>
