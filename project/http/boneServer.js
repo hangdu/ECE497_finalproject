@@ -150,7 +150,7 @@ io.sockets.on('connection', function (socket) {
                 }
             });
             //set new task
-            var hour1 = parseInt(hour)+4;
+            var hour1 = parseInt(hour)+5;
             console.log('hour1=hour+4='+hour1);
             if(hour1>=24){
                 hour1 = hour1-24;

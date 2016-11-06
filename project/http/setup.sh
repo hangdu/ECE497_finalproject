@@ -4,3 +4,4 @@ cat $SLOTS
 
 cd /sys/class/gpio/gpio31
 echo out > direction
+
