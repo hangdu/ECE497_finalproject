@@ -32,6 +32,20 @@ var port = 9090, // Port to listen on
 
 var ds18b20 = require('ds18b20');
 var sensorid;
+var flag = false;
+var nodemailer = require('nodemailer');
+
+var transporter = nodemailer.createTransport('smtps://bbbcoffeepot%40gmail.com:ece497change@smtp.gmail.com');
+
+// setup e-mail data with unicode symbols
+var mailOptions = {
+    from: '"BBB" <bbbcoffeepot@gmail.com>', // sender address
+    to: 'duh2@rose-hulman.edu', // list of receivers
+    subject: 'Hello ✔', // Subject line
+    text: 'Hello world ?', // plaintext body
+    html: '<b>Hello world ?</b>' // html body
+};
+
 b.pinMode('USR3',b.OUTPUT);
 
 // Initialize various IO things.
@@ -178,6 +192,10 @@ io.sockets.on('connection', function (socket) {
     setInterval(function(){
         tempcallback(socket);
     },30000);
+
+
+
+    setInterval(readADC, 1000);
     socket.on('gpio', function (gpioNum) {
 //    console.log('gpio' + gpioNum);
         b.digitalRead(gpioNum, function(x) {
@@ -415,5 +433,32 @@ function tempcallback(socket){
          socket.emit('temp',{temp:value});
      
      });
+
+}
+
+
+function readADC(x){
+    var ADCV = b.analogRead('P9_36');
+    console.log('ADC_value='+ADCV);
+
+    if(flag&&ADCV>0.7){
+        console.log('send email!!!');
+        flag = false;
+        sendemail();
+    }
+    if(!flag&&ADCV<0.7){
+        flag = true;
+    }
+}
+
+
+function sendemail(){
+// send mail with defined transport object
+    transporter.sendMail(mailOptions, function(error, info){
+         if(error){
+             return console.log(error);
+          }
+         console.log('Message sent: ' + info.response);
+    });
 
 }
