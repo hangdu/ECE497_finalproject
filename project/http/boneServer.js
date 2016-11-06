@@ -5,6 +5,7 @@
 // buttonBox, ioPlot, realtimeDemo
 "use strict";
 
+
 var port = 9090, // Port to listen on
     bus = '/dev/i2c-2',
     busNum = 2,     // i2c bus number
@@ -39,6 +40,9 @@ function initIO() {
     b.pinMode('P9_42', b.INPUT);
     b.pinMode('P9_41', b.INPUT);
     b.pinMode(pwm,     b.ANALOG_OUTPUT);    // PWM
+
+
+
     
     // Initialize pwm
 }
