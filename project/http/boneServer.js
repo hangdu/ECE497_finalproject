@@ -444,7 +444,7 @@ function readADC(x){
     if(flag&&ADCV>0.7){
         console.log('send email!!!');
         flag = false;
-        sendemail();
+//        sendemail();
     }
     if(!flag&&ADCV<0.7){
         flag = true;
