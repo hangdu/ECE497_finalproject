@@ -102,6 +102,12 @@ $("#submittime").click(function(){
     socket.emit('coffeeon',{time:x});
 });
 
+$("#submit_email").click(function(){
+
+    var x = document.getElementById("email_address").value;
+    console.log('email address='+x);
+    socket.emit('email',{emailadd:x});
+});
 function test(){
     socket.emit('led1',{state:1});
 }
@@ -193,16 +199,16 @@ socket.on('image',function(params){
 			<div id="placeholder" style="width:600px;height:300px"></div>
 		</div>
 
-		<p>You can update a chart periodically to get a real-time effect by using a timer to insert the new data in the plot and redraw it.</p>
+		<p>You can set up a time to turn on the coffee pot.</p>
 
-		<p>Time between updates: <input id="coffeeontime" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
+		<p>time(format should be hh:min):     <input id="coffeeontime" type="text" value="" style="text-align: right; width:5em"></p>
 
 	</div>
     <button id="submittime">submit</button>
-	<div id="footer">
-		Copyright &copy; 2007 - 2014 IOLA and Ole Laursen
-	</div>
 
-
+    
+	<p>Please input your email address. Coffee pot empty alert will send an email if necessary!     <input id="email_address" type="text" value="" style="text-align: right; width:15em"></p>
+      
+    <button id="submit_email">submit email</button>
 </body>
 </html>

@@ -32,6 +32,7 @@ var port = 9090, // Port to listen on
         var pwm = 'P9_21';
 
 var ds18b20 = require('ds18b20');
+var emailadd;
 var sensorid;
 var flag = false;
 var nodemailer = require('nodemailer');
@@ -42,11 +43,12 @@ var transporter = nodemailer.createTransport('smtps://bbbcoffeepot%40gmail.com:e
 var mailOptions = {
     from: '"BBB" <bbbcoffeepot@gmail.com>', // sender address
     to: 'duh2@rose-hulman.edu', // list of receivers
+    
     subject: 'Hello ✔', // Subject line
     text: 'Hello world ?', // plaintext body
     html: '<b>Hello world ?</b>' // html body
 };
-
+//mailOptions.to = 'test@rose-hulman.edu';
 b.pinMode('USR3',b.OUTPUT);
 
 // Initialize various IO things.
@@ -150,6 +152,14 @@ io.sockets.on('connection', function (socket) {
     });
 
 
+    socket.on('email',function(param){
+        console.log('receive email signal');
+        console.log(param.emailadd);
+        emailadd = param.emailadd;
+         
+        mailOptions.to = param.emailadd;
+        sendemail();
+    });
     socket.on('coffeeon',function(param){
             console.log(param);
             console.log(param.time);
