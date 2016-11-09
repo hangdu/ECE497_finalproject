@@ -4,8 +4,8 @@
 // This is a general server for the various web frontends
 // buttonBox, ioPlot, realtimeDemo
 "use strict";
-
-
+var flagcount=0;
+var adcThresh = 0.8;
 var port = 9090, // Port to listen on
     bus = '/dev/i2c-2',
     busNum = 2,     // i2c bus number
@@ -31,20 +31,21 @@ var port = 9090, // Port to listen on
         // PWM
         var pwm = 'P9_21';
 
+
+var nodemailer = require('nodemailer');
 var ds18b20 = require('ds18b20');
 var sensorid;
 var flag = false;
-var nodemailer = require('nodemailer');
 
 var transporter = nodemailer.createTransport('smtps://bbbcoffeepot%40gmail.com:ece497change@smtp.gmail.com');
 
 // setup e-mail data with unicode symbols
 var mailOptions = {
     from: '"BBB" <bbbcoffeepot@gmail.com>', // sender address
-    to: 'duh2@rose-hulman.edu', // list of receivers
+    to: 'dituccjv@rose-hulman.edu', // list of receivers
     subject: 'Hello ✔', // Subject line
     text: 'Hello world ?', // plaintext body
-    html: '<b>Hello world ?</b>' // html body
+    html: '<b>Hello friend, it seems your coffee pot is running low. You should probably do something about it ?</b>' // html body
 };
 
 b.pinMode('USR3',b.OUTPUT);
@@ -199,7 +200,7 @@ io.sockets.on('connection', function (socket) {
 
 
 
-    setInterval(readADC, 1000);
+    setInterval(readADC, 10000);
     socket.on('gpio', function (gpioNum) {
 //    console.log('gpio' + gpioNum);
         b.digitalRead(gpioNum, function(x) {
@@ -445,13 +446,17 @@ function readADC(x){
     var ADCV = b.analogRead('P9_36');
     console.log('ADC_value='+ADCV);
 
-    if(flag&&ADCV>0.7){
-        console.log('send email!!!');
-        flag = false;
-        sendemail();
-    }
-    if(!flag&&ADCV<0.7){
+    if(flag&&ADCV>adcThresh){
+	flagcount++;
+	if(flagcount>10){
+            console.log('send email!!!');
+            flag = false;
+//            sendemail();
+	    flagcount=0;
+	}}
+    if(!flag&&ADCV<adcThresh){
         flag = true;
+	flagcount=0;
     }
 }
 
