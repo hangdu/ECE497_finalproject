@@ -82,6 +82,8 @@ var data = [],
 var tempcount = 0;	
 	
 
+var mintemp = 400;
+var maxtemp = 0;
 
 
 var timedata = [];
@@ -126,6 +128,16 @@ socket.on('temp',function(param){
     var xaexsmin = 10*Math.floor(min/10);
     plot.getOptions().xaxes[0].min = xaexsmin;
     plot.getOptions().xaxes[0].max = xaexsmin+10;
+   
+    if(param.temp>maxtemp){
+        maxtemp = param.temp;
+    }
+    if(param.temp<mintemp){
+        mintemp = param.temp;
+    }
+
+    plot.getOptions().yaxes[0].min = mintemp-5;
+    plot.getOptions().yaxes[0].max = maxtemp+5;
 
     plot.setupGrid();
     tempdata.push([min+second/60,param.temp]);
