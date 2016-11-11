@@ -95,10 +95,6 @@ console.log("Listening on " + port);
 var io = require('socket.io').listen(server);
 io.set('log level', 2);
 var socket1;
-// See https://github.com/LearnBoost/socket.io/wiki/Exposed-events
-// for Exposed events
-
-// on a 'connection' event
 ds18b20.sensors(function(err,id){
     sensorid = id;
     console.log('sensorid='+sensorid);
@@ -107,30 +103,11 @@ ds18b20.sensors(function(err,id){
 io.sockets.on('connection', function (socket) {
     socket1 = socket;
     console.log("Connection " + socket.id + " accepted.");
-//    console.log("socket: " + socket);
-
-    // now that we have our connected 'socket' object, we can 
-    // define its event handlers
-
-    // Send value every time a 'message' is received.
     socket.emit('news',{hello:'world'});
     socket.on('my other event',function(params){
         console.log('receive my other event='+params.dis);
     });
 
-    socket.on('ain', function (ainNum) {
-        b.analogRead(ainNum, function(x) {
-            if(x.err && errCount++<5) console.log("AIN read error");
-            if(typeof x.value !== 'number' || x.value === "NaN") {
-                console.log('x.value = ' + x.value);
-            } else {
-                socket.emit('ain', {pin:ainNum, value:x.value});
-            }
-//            if(ainNum === "P9_38") {
-//                console.log('emitted ain: ' + x.value + ', ' + ainNum);
-//            }
-        });
-    });
 
     socket.on('led1',function(state){
         console.log('buton is clicked');
@@ -205,7 +182,7 @@ io.sockets.on('connection', function (socket) {
 //get temp data every 30s
     setInterval(function(){
         tempcallback(socket);
-    },30000);
+    },10000);
 
 
 
@@ -219,29 +196,7 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
-    socket.on('i2c', function (i2cNum) {
-        console.log('Got i2c request:' + i2cNum);
-        child_process.exec('i2cget -y ' + busNum + ' ' + i2cNum + ' 0 w',
-            function (error, stdout, stderr) {
-//     The TMP102 returns a 12 bit value with the digits swapped
-                stdout = '0x' + stdout.substring(4,6) + stdout.substring(2,4);
-//                console.log('i2cget: "' + stdout + '"');
-                if(error) { console.log('error: ' + error); }
-                if(stderr) {console.log('stderr: ' + stderr); }
-                socket.emit('i2c', stdout);
-            });
-    });
 
-    socket.on('led', function (ledNum) {
-        var ledPath = "/sys/class/leds/beaglebone:green:usr" + ledNum + "/brightness";
-//        console.log('LED: ' + ledPath);
-        fs.readFile(ledPath, 'utf8', function (err, data) {
-            if(err) throw err;
-            data = data.substring(0,1) === "1" ? "0" : "1";
-//            console.log("LED%d: %s", ledNum, data);
-            fs.writeFile(ledPath, data);
-        });
-    });
 
     function trigger(arg) {
         var ledPath = "/sys/class/leds/beaglebone:green:usr";
