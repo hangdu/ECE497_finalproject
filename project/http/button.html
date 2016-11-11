@@ -15,30 +15,12 @@
 	<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
 	<script language="javascript" type="text/javascript" src="./flot1/jquery.js"></script>
 	<script language="javascript" type="text/javascript" src="./flot1/jquery.flot.js"></script>
-
-	<script language="javascript" type="text/javascript" src="./flot1/jquery.flot.axislabels.js"></script>
-
 	<script type="text/javascript"></script>
-
 <script>
     $(document).ready(function(){
         
         var plot =  $.plot($("#placeholder"), [ [[0, 0]] ], 
                 { 
-                    axisLabels:{
-                        show:true
-                    },
-
-                    xaxes:[{
-                        axisLabel:'time',
-                    }],
-
-                    yaxes:[{
-                        position:'left',
-                        axisLabel:'temp'
-                    }],
-
-
                     yaxis: { max: 40 },
                     xaxis: { max: 15},
                     grid: {clickable:true,
