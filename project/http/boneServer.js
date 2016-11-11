@@ -187,112 +187,9 @@ io.sockets.on('connection', function (socket) {
 
 
     setInterval(readADC, 1000);
-    socket.on('gpio', function (gpioNum) {
-//    console.log('gpio' + gpioNum);
-        b.digitalRead(gpioNum, function(x) {
-            if (x.err) throw x.err;
-            socket.emit('gpio', {pin:gpioNum, value:x.value});
-//            console.log('emitted gpio: ' + x.value + ', ' + gpioNum);
-        });
-    });
 
 
 
-    function trigger(arg) {
-        var ledPath = "/sys/class/leds/beaglebone:green:usr";
-//    console.log("trigger: " + arg);
-	    arg = arg.split(" ");
-	    for(var i=0; i<4; i++) {
-//	    console.log(" trigger: ", arg[i]);
-	        fs.writeFile(ledPath + i + "/trigger", arg[i]);
-	    }
-    }
-    
-    socket.on('trigger', function(trig) {
-//	console.log('trigger: ' + trig);
-	    if(trig) {
-            trigger("heartbeat mmc0 cpu0 none");
-        } else {
-            trigger("none none none none");
-        }
-    });
-    
-    // Send a packet of data every time a 'audio' is received.
-    socket.on('audio', function () {
-//        console.log("Received message: " + message + 
-//            " - from client " + socket.id);
-        if(audioChild === 0) {
-            startAudio();
-        }
-        socket.emit('audio', sendAudio() );
-    });
-    
-    socket.on('matrix.bs', function (i2cNum) {
-        var i;
-        var line = new Array(16);
-        // console.log('Got i2c request:' + i2cNum);
-        b.i2cOpen(bus, 0x70);
-        for(i=0; i<16; i++) {
-            // Can only read one byte at a time.  Something's wrong
-            line[i] = b.i2cReadBytes(bus, i, 1)[0].toString(16);
-            // console.log("line: " + JSON.stringify(line[i]));
-        }
-        console.log(line.join(' '));
-        socket.emit('matrix', line.join(' '));
-    });
-    
-    socket.on('matrix.wire', function (i2cNum) {
-        var i;
-        var line = new Array(16);
-        // console.log('Got i2c request:' + i2cNum);
-        b.i2cOpen(bus, 0x70);
-        for(i=0; i<16; i++) {
-            // Can only read one byte at a time.  Something's wrong
-            line[i] = b.i2cReadBytes(bus, i, 1)[0].toString(16);
-            // console.log("line: " + JSON.stringify(line[i]));
-        }
-        console.log(line.join(' '));
-        socket.emit('matrix', line.join(' '));
-    });
-    
-    socket.on('matrix', function (i2cNum) {
-//        console.log('Got i2c request:' + i2cNum);
-        child_process.exec('i2cdump -y -r 0x00-0x0f ' + busNum + ' ' + i2cNum + ' b',
-            function (error, stdout, stderr) {
-//      The LED has 8 16-bit values
-//                console.log('i2cget: "' + stdout + '"');
-		var lines = stdout.split("00: ");
-		// Get the last line of the output and send the string
-		lines = lines[1].substr(0,47);
-		console.log("lines = %s", lines);
-                socket.emit('matrix', lines);
-                if(error) { console.log('error: ' + error); }
-                if(stderr) {console.log('stderr: ' + stderr); }
-            });
-    });
-    
-    // Sets one column every time i2cset is received.
-    socket.on('i2cset.bs', function(params) {
-        // console.log(params);
-        if(params.i2cNum !== i2cNum) {
-            i2cNum = params.i2cNum;
-            console.log("i2cset: Opening " + i2cNum);
-    	    b.i2cOpen(bus, i2cNum);
-        }
-    	b.i2cWriteBytes(bus, params.i, [params.disp]);
-    });
-    
-    socket.on('i2cset', function(params) {
-        console.log('socket on:i2cset value i is'+params.i);
-	// Double i since display has 2 bytes per LED
-	child_process.exec('i2cset -y ' + busNum + ' ' + params.i2cNum + ' ' + params.i + ' ' +
-		params.disp); 
-    });
-    
-    socket.on('slider', function(slideNum, value) {
-        console.log('slider' + slideNum + " = " + value);
-        b.analogWrite(pwm, value/5, 80);
-    });
 
     socket.on('disconnect', function () {
         console.log("Connection " + socket.id + " terminated.");
@@ -304,71 +201,8 @@ io.sockets.on('connection', function (socket) {
     console.log("connectCount = " + connectCount);
 });
 
-function sendAudio() {
-//        console.log("Sending data");
-    if(frameCount === lastFrame) {
-//            console.log("Already sent frame " + lastFrame);
-    } else {
-        lastFrame = frameCount;
-    }
-    return(audioData);
-}
 
-function startAudio(){
-    try {
-        console.log("process.platform: " + process.platform);
-        if(process.platform !== "darwin") {
-        audioChild = child_process.spawn(
-           "/usr/bin/arecord",
-           [
-            "-Dplughw:1,0",
-            "-c2", "-r"+audioRate, "-fU8", "-traw", 
-            "--buffer-size=800", "--period-size=800", "-N"
-           ]
-        );
-        } else {
-        audioChild = child_process.spawn(
-           "/Users/yoder/bin/sox-14.4.0/rec",
-           [
-            "-c2", "-r44100", "-tu8",  
-            "--buffer", "1600", "-q", "-"
-           ]
-        );
 
-        }
-//        console.log("arecord started");
-        audioChild.stdout.setEncoding('base64');
-        audioChild.stdout.on('data', function(data) {
-            // Save data read from arecord in globalData
-            audioData = data;
-            frameCount++;
-        });
-        audioChild.stderr.on('data', function(data) {
-            console.log("arecord: " + data);
-        });
-        audioChild.on('exit', function(code) {
-            console.log("arecord exited with: " + code);
-        });
-    } catch(err) {
-        console.log("arecord error: " + err);
-    }
-}
-
-function timeoutcallback(socket){
-    
-        console.log('function timeoutcallback');
-        fs.readFile('test.JPEG',function(err,buf,count){
-            socket.emit('image',{image: true,buffer:buf.toString('base64'),count:picturecount});
-            console.log('image file is sent from the server');
-            console.log('buffer  '+buf.toString('base64'));
-            console.log('picturecount='+picturecount);
-        });
-        picturecount = picturecount+1;
-        if(3 == picturecount){
-            picturecount = 0;
-        }
-
-}
 
 function piccallback(error,stout,sterr){
     if(!error){
