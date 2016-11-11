@@ -34,6 +34,7 @@ var port = 9090, // Port to listen on
 var exec = require('child_process').exec
 var nodemailer = require('nodemailer');
 var ds18b20 = require('ds18b20');
+var emailadd;
 var sensorid;
 var flag = false;
 
@@ -47,7 +48,7 @@ var mailOptions = {
     text: 'Hello world ?', // plaintext body
     html: '<b>Hello friend, it seems your coffee pot is running low. You should probably do something about it ?</b>' // html body
 };
-
+//mailOptions.to = 'test@rose-hulman.edu';
 b.pinMode('USR3',b.OUTPUT);
 
 // Initialize various IO things.
@@ -94,10 +95,6 @@ console.log("Listening on " + port);
 var io = require('socket.io').listen(server);
 io.set('log level', 2);
 var socket1;
-// See https://github.com/LearnBoost/socket.io/wiki/Exposed-events
-// for Exposed events
-
-// on a 'connection' event
 ds18b20.sensors(function(err,id){
     sensorid = id;
     console.log('sensorid='+sensorid);
@@ -106,30 +103,11 @@ ds18b20.sensors(function(err,id){
 io.sockets.on('connection', function (socket) {
     socket1 = socket;
     console.log("Connection " + socket.id + " accepted.");
-//    console.log("socket: " + socket);
-
-    // now that we have our connected 'socket' object, we can 
-    // define its event handlers
-
-    // Send value every time a 'message' is received.
     socket.emit('news',{hello:'world'});
     socket.on('my other event',function(params){
         console.log('receive my other event='+params.dis);
     });
 
-    socket.on('ain', function (ainNum) {
-        b.analogRead(ainNum, function(x) {
-            if(x.err && errCount++<5) console.log("AIN read error");
-            if(typeof x.value !== 'number' || x.value === "NaN") {
-                console.log('x.value = ' + x.value);
-            } else {
-                socket.emit('ain', {pin:ainNum, value:x.value});
-            }
-//            if(ainNum === "P9_38") {
-//                console.log('emitted ain: ' + x.value + ', ' + ainNum);
-//            }
-        });
-    });
 
     socket.on('led1',function(state){
         console.log('buton is clicked');
@@ -151,6 +129,14 @@ io.sockets.on('connection', function (socket) {
     });
 
 
+    socket.on('email',function(param){
+        console.log('receive email signal');
+        console.log(param.emailadd);
+        emailadd = param.emailadd;
+         
+        mailOptions.to = param.emailadd;
+        sendemail();
+    });
     socket.on('coffeeon',function(param){
             console.log(param);
             console.log(param.time);
@@ -196,10 +182,7 @@ io.sockets.on('connection', function (socket) {
 //get temp data every 30s
     setInterval(function(){
         tempcallback(socket);
-    },30000);
-
-
-
+    },10000);
     setInterval(readADC, 10000);
     socket.on('gpio', function (gpioNum) {
 //    console.log('gpio' + gpioNum);
@@ -210,125 +193,11 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
-    socket.on('i2c', function (i2cNum) {
-        console.log('Got i2c request:' + i2cNum);
-        child_process.exec('i2cget -y ' + busNum + ' ' + i2cNum + ' 0 w',
-            function (error, stdout, stderr) {
-//     The TMP102 returns a 12 bit value with the digits swapped
-                stdout = '0x' + stdout.substring(4,6) + stdout.substring(2,4);
-//                console.log('i2cget: "' + stdout + '"');
-                if(error) { console.log('error: ' + error); }
-                if(stderr) {console.log('stderr: ' + stderr); }
-                socket.emit('i2c', stdout);
-            });
-    });
 
-    socket.on('led', function (ledNum) {
-        var ledPath = "/sys/class/leds/beaglebone:green:usr" + ledNum + "/brightness";
-//        console.log('LED: ' + ledPath);
-        fs.readFile(ledPath, 'utf8', function (err, data) {
-            if(err) throw err;
-            data = data.substring(0,1) === "1" ? "0" : "1";
-//            console.log("LED%d: %s", ledNum, data);
-            fs.writeFile(ledPath, data);
-        });
-    });
 
-    function trigger(arg) {
-        var ledPath = "/sys/class/leds/beaglebone:green:usr";
-//    console.log("trigger: " + arg);
-	    arg = arg.split(" ");
-	    for(var i=0; i<4; i++) {
-//	    console.log(" trigger: ", arg[i]);
-	        fs.writeFile(ledPath + i + "/trigger", arg[i]);
-	    }
-    }
-    
-    socket.on('trigger', function(trig) {
-//	console.log('trigger: ' + trig);
-	    if(trig) {
-            trigger("heartbeat mmc0 cpu0 none");
-        } else {
-            trigger("none none none none");
-        }
-    });
-    
-    // Send a packet of data every time a 'audio' is received.
-    socket.on('audio', function () {
-//        console.log("Received message: " + message + 
-//            " - from client " + socket.id);
-        if(audioChild === 0) {
-            startAudio();
-        }
-        socket.emit('audio', sendAudio() );
-    });
-    
-    socket.on('matrix.bs', function (i2cNum) {
-        var i;
-        var line = new Array(16);
-        // console.log('Got i2c request:' + i2cNum);
-        b.i2cOpen(bus, 0x70);
-        for(i=0; i<16; i++) {
-            // Can only read one byte at a time.  Something's wrong
-            line[i] = b.i2cReadBytes(bus, i, 1)[0].toString(16);
-            // console.log("line: " + JSON.stringify(line[i]));
-        }
-        console.log(line.join(' '));
-        socket.emit('matrix', line.join(' '));
-    });
-    
-    socket.on('matrix.wire', function (i2cNum) {
-        var i;
-        var line = new Array(16);
-        // console.log('Got i2c request:' + i2cNum);
-        b.i2cOpen(bus, 0x70);
-        for(i=0; i<16; i++) {
-            // Can only read one byte at a time.  Something's wrong
-            line[i] = b.i2cReadBytes(bus, i, 1)[0].toString(16);
-            // console.log("line: " + JSON.stringify(line[i]));
-        }
-        console.log(line.join(' '));
-        socket.emit('matrix', line.join(' '));
-    });
-    
-    socket.on('matrix', function (i2cNum) {
-//        console.log('Got i2c request:' + i2cNum);
-        child_process.exec('i2cdump -y -r 0x00-0x0f ' + busNum + ' ' + i2cNum + ' b',
-            function (error, stdout, stderr) {
-//      The LED has 8 16-bit values
-//                console.log('i2cget: "' + stdout + '"');
-		var lines = stdout.split("00: ");
-		// Get the last line of the output and send the string
-		lines = lines[1].substr(0,47);
-		console.log("lines = %s", lines);
-                socket.emit('matrix', lines);
-                if(error) { console.log('error: ' + error); }
-                if(stderr) {console.log('stderr: ' + stderr); }
-            });
-    });
-    
-    // Sets one column every time i2cset is received.
-    socket.on('i2cset.bs', function(params) {
-        // console.log(params);
-        if(params.i2cNum !== i2cNum) {
-            i2cNum = params.i2cNum;
-            console.log("i2cset: Opening " + i2cNum);
-    	    b.i2cOpen(bus, i2cNum);
-        }
-    	b.i2cWriteBytes(bus, params.i, [params.disp]);
-    });
-    
-    socket.on('i2cset', function(params) {
-        console.log('socket on:i2cset value i is'+params.i);
-	// Double i since display has 2 bytes per LED
-	child_process.exec('i2cset -y ' + busNum + ' ' + params.i2cNum + ' ' + params.i + ' ' +
-		params.disp); 
-    });
-    
-    socket.on('slider', function(slideNum, value) {
-        console.log('slider' + slideNum + " = " + value);
-        b.analogWrite(pwm, value/5, 80);
-    });
+
+
+
 
     socket.on('disconnect', function () {
         console.log("Connection " + socket.id + " terminated.");
@@ -340,71 +209,8 @@ io.sockets.on('connection', function (socket) {
     console.log("connectCount = " + connectCount);
 });
 
-function sendAudio() {
-//        console.log("Sending data");
-    if(frameCount === lastFrame) {
-//            console.log("Already sent frame " + lastFrame);
-    } else {
-        lastFrame = frameCount;
-    }
-    return(audioData);
-}
 
-function startAudio(){
-    try {
-        console.log("process.platform: " + process.platform);
-        if(process.platform !== "darwin") {
-        audioChild = child_process.spawn(
-           "/usr/bin/arecord",
-           [
-            "-Dplughw:1,0",
-            "-c2", "-r"+audioRate, "-fU8", "-traw", 
-            "--buffer-size=800", "--period-size=800", "-N"
-           ]
-        );
-        } else {
-        audioChild = child_process.spawn(
-           "/Users/yoder/bin/sox-14.4.0/rec",
-           [
-            "-c2", "-r44100", "-tu8",  
-            "--buffer", "1600", "-q", "-"
-           ]
-        );
 
-        }
-//        console.log("arecord started");
-        audioChild.stdout.setEncoding('base64');
-        audioChild.stdout.on('data', function(data) {
-            // Save data read from arecord in globalData
-            audioData = data;
-            frameCount++;
-        });
-        audioChild.stderr.on('data', function(data) {
-            console.log("arecord: " + data);
-        });
-        audioChild.on('exit', function(code) {
-            console.log("arecord exited with: " + code);
-        });
-    } catch(err) {
-        console.log("arecord error: " + err);
-    }
-}
-
-function timeoutcallback(socket){
-    
-        console.log('function timeoutcallback');
-        fs.readFile('test.JPEG',function(err,buf,count){
-            socket.emit('image',{image: true,buffer:buf.toString('base64'),count:picturecount});
-            console.log('image file is sent from the server');
-            console.log('buffer  '+buf.toString('base64'));
-            console.log('picturecount='+picturecount);
-        });
-        picturecount = picturecount+1;
-        if(3 == picturecount){
-            picturecount = 0;
-        }
-
-}
 
 function piccallback(error,stout,sterr){
     if(!error){
