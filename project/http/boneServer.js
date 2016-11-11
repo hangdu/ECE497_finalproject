@@ -5,7 +5,7 @@
 // buttonBox, ioPlot, realtimeDemo
 "use strict";
 var flagcount=0;
-var adcThresh = 0.8;
+var adcThresh = 0.83;
 var port = 9090, // Port to listen on
     bus = '/dev/i2c-2',
     busNum = 2,     // i2c bus number
@@ -31,7 +31,7 @@ var port = 9090, // Port to listen on
         // PWM
         var pwm = 'P9_21';
 
-
+var exec = require('child_process').exec
 var nodemailer = require('nodemailer');
 var ds18b20 = require('ds18b20');
 var sensorid;
@@ -451,7 +451,8 @@ function readADC(x){
 	if(flagcount>10){
             console.log('send email!!!');
             flag = false;
-//            sendemail();
+            sendemail();
+            exec('cd /sys/class/gpio/gpio31 && echo 0 > value');
 	    flagcount=0;
 	}}
     if(!flag&&ADCV<adcThresh){
